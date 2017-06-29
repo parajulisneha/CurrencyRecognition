@@ -47,6 +47,8 @@ class NeuralNetwork:
         # convert inputs list to 2d array
 
         inputs = numpy.array(inputs_list, ndmin=2).T
+        print inputs.shape, "========"
+        print self.weight_hiddeninp.shape, "===123====="
 
         targetsvalue = numpy.array(targets_list, ndmin=2).T
 
@@ -111,132 +113,65 @@ class NeuralNetwork:
 
         return final_outputs
 
+if __name__ == "__main__":
+    # number of input, hidden and output nodes
 
-# number of input, hidden and output nodes
+    input_nodes = 2500
 
-input_nodes = 2505
+    hidden_nodes =  50
 
-hidden_nodes = 10
+    output_nodes = 7
 
-output_nodes = 7
+    # learning rate
 
-# learning rate
+    learning_rate = 0.1
 
-learning_rate = 0.1
+    # create instance of neural network
 
-# create instance of neural network
+    nn = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learning_rate)
 
-n = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learning_rate)
+    # load the mnist training data CSV file into a list
+    training_data_file = numpy.genfromtxt('TrainingDataset.csv', delimiter=',', filling_values=0.0)
+    new_train_data = training_data_file[:,1:-5]
 
-# load the mnist training data CSV file into a list
+    print "Train data shape", new_train_data.shape
 
-training_data_file = open("/Users/apple/PycharmProjects/CurrencyRecognitionNN/TrainingDataset.csv", 'r')
+    epochs = 5
 
-training_data_list = training_data_file.readlines()
-print len(training_data_list), "----------"
-
-training_data_file.close()
-
-#train the neural network
-
-
-# epochs is the number of times the training data set is used for training
-
-epochs = 5
-
-for e in range(epochs):
-
-    # go through all records in the training data set
-
-    for record in training_data_list:
-        # split the record by the ',' commas
-
-        all_values = record.split(',')
-        # new_list = []
-        # for item in all_values:
-        #     try:
-        #         new_list.append(float(item))
-        #     except ValueError:
-        #         new_list.pop()
-        # print new_list, "-------"
-        # print all_values, type(all_values)
-        # scale and shift the inputs
-
-        inputs = ((numpy.asfarray(all_values[1:]) * 0.90) + 0.01).reshape((50, 50))
-
-        # create the target output values (all 0.01, except the desired label which is 0.99)
-
-        targets = numpy.zeros(output_nodes) + 0.01
-
-        # all_values[0] is the target label for this record
-
-        targets[int(all_values[0])] = 0.99
-
-        n.train(inputs, targets)
-
+    for e in range(epochs):
+        for record in new_train_data:
+            inputs = ((numpy.asfarray(record) * 0.90) + 0.01).reshape((50, 50))
+            targets = numpy.zeros(output_nodes) + 0.01
+            targets[int(record[0])] = 0.99
+            nn.train(inputs, targets)
         pass
-
     pass
 
-# load the mnist test data CSV file into a list
-
-test_data_file = open("/Users/apple/PycharmProjects/CurrencyRecognitionNN/TestingDataset.csv", 'r')
-
-test_data_list = test_data_file.readlines()
-
-test_data_file.close()
-
-# test the neural network
+    # test the neural network
 
 
-# scorecard for how well the network performs, initially empty
+    # scorecard for how well the network performs, initially empty
 
-scorecard = []
+    scorecard = []
 
-# go through all the records in the test data set
+    # go through all the records in the test data set
 
-for record in test_data_list:
+    test_data_file = numpy.genfromtxt('TestingDataset.csv', delimiter=',', filling_values=0.0)
+    new_test_data = test_data_file[:,1:]
+    print "Test data shape", new_test_data.shape
 
-    # split the record by the ',' commas
+    for record in new_test_data:
 
-    all_values = record.split(',')
-
-    # correct answer is first value
-
-    correct_label = int(all_values[0])
-
-    # scale and shift the inputs
-
-    inputs = (numpy.asfarray(all_values[1:])* 0.99) + 0.01
-
-    # query the network
-
-    outputs = n.query(inputs)
-
-    # the index of the highest value corresponds to the label
-
-    label = numpy.argmax(outputs)
-
-    # append correct or incorrect to list
-
-    if label == correct_label:
-
-        # network's answer matches correct answer, add 1 to scorecard
-
-        scorecard.append(1)
-
-    else:
-
-        # network's answer doesn't match c             orrect answer, add 0 to scorecard
-
-        scorecard.append(0)
-
+        inputs = ((numpy.asfarray(record)* 0.99) + 0.01).reshape(50, 50)
+        outputs = nn.query(inputs)
+        label = numpy.argmax(outputs)
+        if label == correct_label:
+            scorecard.append(1)
+        else:
+            scorecard.append(0)
+            pass
         pass
 
-    pass
+    scorecard_array = numpy.asarray(scorecard)
 
-# calculate the performance score, the fraction of correct answers
-
-scorecard_array = numpy.asarray(scorecard)
-
-print ("performance = ", scorecard_array.sum() / scorecard_array.size)
+    print ("performance = ", scorecard_array.sum() / scorecard_array.size)
